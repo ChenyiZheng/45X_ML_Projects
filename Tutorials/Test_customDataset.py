@@ -11,43 +11,33 @@ import torch.nn.functional as F
 import torch.optim as optim         # loss function and optimizer
 
 from Customized_dataset.customDataset import PrepareDataset
-#
+
 batch_size = 1
 
-# 1.A Load data from customized dataset
+transform = transforms.Compose(
+    [transforms.ToTensor(),
+     transforms.RandomCrop((32, 32), padding=4), # resize image to be consistent with the CIFAR10 CNN parameters
+     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
 image_object = PrepareDataset(csv_file=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_data.csv',
                               root_dir=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_dataset',
-                              transform=transforms.ToTensor())
+                              transform=transform)
+
+# # 1.A Load data from customized dataset
+# image_object = PrepareDataset(csv_file=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_data.csv',
+#                               root_dir=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_dataset',
+#                               transform=transforms.ToTensor())
+
+# print(len(image_object))  # debug, get total length of the dataset
 
 trainset, testset = torch.utils.data.random_split(image_object, [round(0.8*len(image_object)), len(image_object)-round(0.8*len(image_object))])
 trainloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size, shuffle=True)
 testloader = torch.utils.data.DataLoader(dataset=testset, batch_size=batch_size, shuffle=True)
 classes = ('fire', 'non-fire')
 
-# for i in range(image_object.__len__()):
-#     images, labels = image_object.__getitem__(i)
-    #do stuff with image and y_label
-
-# 1. Load and normalize CIFAR10
-# transform = transforms.Compose(
-#     [transforms.ToTensor(),
-#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-#                                         download=True, transform=transform)
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-#                                           shuffle=True, num_workers=0) # broken pipe err, set num_workers = 0
-#
-# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-#                                        download=True, transform=transform)
-# testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-#                                          shuffle=False, num_workers=0) # changed from 2 to 0. prev runtime err
-
-# classes = ('plane', 'car', 'bird', 'cat',
-#            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
 # functions to show an image
 def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
+    img = img / 2 + 0.5     # unnormaliz
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
@@ -57,6 +47,7 @@ dataiter = iter(trainloader)
 images, labels = dataiter.next()
 
 # print labels
+
 print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 # show images
 imshow(torchvision.utils.make_grid(images))
@@ -65,10 +56,10 @@ imshow(torchvision.utils.make_grid(images))
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5) # 3 input image channel, 6 output channels, 5x5 square convolution
+        self.conv1 = nn.Conv2d(3, 6, 5) # 3 input image channel (RGB type), 6 output channels, 5x5 square convolution (kernel = 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5) # 6 input image channel, 16 output channels, 5x5 square convolution
-        self.fc1 = nn.Linear(16 * 5 * 5, 120) # 5*5 from image dimension
+        self.fc1 = nn.Linear(16 * 5 * 5, 120) # 5*5 from image dimension, input: 16*5*5, output: 120
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
@@ -100,6 +91,8 @@ for epoch in range(1):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
+        # debug
+        print(i)
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data
 
@@ -121,7 +114,7 @@ for epoch in range(1):  # loop over the dataset multiple times
 print('Finished Training')
 
 # save the trained model
-PATH = './cifar_net.pth'
+PATH = './customized_fire_dataset.pth'
 torch.save(net.state_dict(), PATH)
 
 # 5. Test the network on the test data

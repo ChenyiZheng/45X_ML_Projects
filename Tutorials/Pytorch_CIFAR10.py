@@ -46,6 +46,8 @@ def imshow(img):
 dataiter = iter(trainloader)
 images, labels = dataiter.next()
 
+print(len(dataiter))
+
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 # show images
