@@ -1,11 +1,13 @@
 import csv
 import os
 
-os.chdir(r'C:\Users\imhen\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_dataset')
+csv_path = r'E:\cheny\PycharmProjects\local_test\Customized_dataset'
+image_path = r'E:\cheny\PycharmProjects\local_test\Customized_dataset\fire_dataset_complete'
+os.chdir(image_path)
 
 flag = 'non'
 
-with open('mycsv.csv', 'w', newline='') as f:
+with open(os.path.join(csv_path, 'fire_dataset_complete.csv'), 'w', newline='') as f:
     thewriter = csv.writer(f)
     for filename in os.listdir():
         if flag in filename:
