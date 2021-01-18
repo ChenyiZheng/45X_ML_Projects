@@ -13,13 +13,14 @@ import torch.optim as optim         # loss function and optimizer
 from Customized_dataset.customDataset import PrepareDataset
 
 batch_size = 1
+train_percentage = 0.6
 
 transform = transforms.Compose(
     [transforms.ToTensor(),
-     transforms.RandomCrop((32, 32), padding=4), # resize image to be consistent with the CIFAR10 CNN parameters
+     transforms.Scale((32, 32)), # resize image to be consistent with the CIFAR10 CNN parameters
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-image_object = PrepareDataset(csv_file=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_data.csv',
+image_object = PrepareDataset(csv_file=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_dataset_complete.csv',
                               root_dir=r'E:\cheny\PycharmProjects\45X_ML_Projects\Customized_dataset\fire_dataset',
                               transform=transform)
 
@@ -30,7 +31,7 @@ image_object = PrepareDataset(csv_file=r'E:\cheny\PycharmProjects\45X_ML_Project
 
 # print(len(image_object))  # debug, get total length of the dataset
 
-trainset, testset = torch.utils.data.random_split(image_object, [round(0.8*len(image_object)), len(image_object)-round(0.8*len(image_object))])
+trainset, testset = torch.utils.data.random_split(image_object, [round(train_percentage*len(image_object)), len(image_object)-round(train_percentage*len(image_object))])
 trainloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size, shuffle=True)
 testloader = torch.utils.data.DataLoader(dataset=testset, batch_size=batch_size, shuffle=True)
 classes = ('fire', 'non-fire')
@@ -47,7 +48,7 @@ dataiter = iter(trainloader)
 images, labels = dataiter.next()
 
 # print labels
-
+print('Print out random pictures in the train dataset: ')
 print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 # show images
 imshow(torchvision.utils.make_grid(images))
@@ -61,7 +62,7 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5) # 6 input image channel, 16 output channels, 5x5 square convolution
         self.fc1 = nn.Linear(16 * 5 * 5, 120) # 5*5 from image dimension, input: 16*5*5, output: 120
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, 2)  # change from 10 to 2, output category should be 2 (fire and nonfire)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -92,7 +93,8 @@ for epoch in range(1):  # loop over the dataset multiple times
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # debug
-        print(i)
+        #print(i)
+
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data
 
@@ -106,9 +108,16 @@ for epoch in range(1):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
+        '''
+        if i % 2000 == 1999:  # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 2000))
+                (epoch + 1, i + 1, running_loss / 2000))
+            running_loss = 0.0
+        '''
+
+        if i % 100 == 99:    # print every 100 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                  (epoch + 1, i + 1, running_loss / 100))
             running_loss = 0.0
 
 print('Finished Training')
@@ -142,9 +151,10 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-print('Accuracy of the network on the 10000 test images: %d %%' % (
-    100 * correct / total))
+print('Accuracy of the network on the %d test images: %d %%' % (len(image_object)-round(train_percentage*len(image_object)),
+    100 * correct / total))  # print the number of test images and the accuracy
 
+'''
 class_correct = list(0. for i in range(10))
 class_total = list(0. for i in range(10))
 with torch.no_grad():
@@ -161,3 +171,4 @@ with torch.no_grad():
 for i in range(10):
     print('Accuracy of %5s : %2d %%' % (
         classes[i], 100 * class_correct[i] / class_total[i]))
+'''
